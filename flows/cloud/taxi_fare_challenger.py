@@ -1,11 +1,12 @@
-from metaflow import FlowSpec, step, card, conda_base, current, Parameter, Flow, trigger, project, S3
+from metaflow import FlowSpec, step, card, conda_base, current, Parameter, Flow, trigger, S3, project
 from metaflow.cards import Markdown, Table, Image, Artifact
 
-URL = "https://outerbounds-datasets.s3.us-west-2.amazonaws.com/taxi/latest.parquet"
+# URL = 'https://outerbounds-datasets.s3.us-west-2.amazonaws.com/taxi/latest.parquet'
+URL = 's3://outerbounds-datasets/taxi/latest.parquet'
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-@project(name="fullstack")
-@trigger(events=['s3'])
+# @trigger(events=['s3'])
+@project(name="taxi_fare_prediction")
 @conda_base(libraries={'pandas': '1.4.2', 'pyarrow': '11.0.0', 'numpy': '1.21.2', 'scikit-learn': '1.1.2'})
 class TaxiFarePrediction(FlowSpec):
 
@@ -89,7 +90,8 @@ class TaxiFarePrediction(FlowSpec):
     @step
     def validate(self):
         from sklearn.model_selection import cross_val_score
-        self.scores = cross_val_score(self.model, self.X, self.y, cv=5)
+        self.scores = cross_val_score(self.model, self.X, self.y, cv=10)
+        self.model_type = "model_new"
         current.card.append(Markdown("# Taxi Fare Prediction Results"))
         current.card.append(Table(self.gather_sibling_flow_run_results(), headers=["Pass/fail", "Run ID", "Created At", "R^2 score", "Stderr"]))
         self.next(self.end)
